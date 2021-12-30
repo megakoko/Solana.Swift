@@ -4,12 +4,13 @@ extension Action {
     public func serializeTransaction(
         instructions: [TransactionInstruction],
         recentBlockhash: String? = nil,
-        signers: [Account],
+        signers: [Signer],
         feePayer: PublicKey? = nil,
         onComplete: @escaping ((Result<String, Error>) -> Void)
     ) {
 
-        guard let feePayer = try? feePayer ?? auth.account.get().publicKey else {
+        guard let feePayer = feePayer ?? signers.first?.publicKey else {
+//        guard let feePayer = try? feePayer ?? auth.account.get().publicKey else {
             onComplete(.failure(SolanaError.invalidRequest(reason: "Fee-payer not found")))
             return
         }
@@ -24,13 +25,15 @@ extension Action {
                     recentBlockhash: recentBlockhash
                 )
 
-                transaction.sign(signers: signers)
-                .flatMap { transaction.serialize() }
-                .flatMap {
-                    let base64 = $0.bytes.toBase64()
-                    return .success(base64)
+                transaction.sign(signers: signers) { result in
+                    result
+                        .flatMap { transaction.serialize() }
+                        .flatMap {
+                            let base64 = $0.bytes.toBase64()
+                            return .success(base64)
+                        }
+                        .onSuccess { onComplete(.success($0)) }
                 }
-                .onSuccess { onComplete(.success($0)) }
             case .failure(let error):
                 onComplete(.failure(error))
                 return

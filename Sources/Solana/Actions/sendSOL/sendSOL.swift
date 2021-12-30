@@ -4,14 +4,17 @@ extension Action {
     public func sendSOL(
         to destination: String,
         amount: UInt64,
+        signer: Signer,
         onComplete: @escaping ((Result<TransactionID, Error>) -> Void)
     ) {
-        guard let account = try? self.auth.account.get() else {
-            onComplete(.failure(SolanaError.unauthorized))
-            return
-        }
+//        guard let account = try? self.auth.account.get() else {
+//            onComplete(.failure(SolanaError.unauthorized))
+//            return
+//        }
+        
+        let fromPublicKey = signer.publicKey
 
-        let fromPublicKey = account.publicKey
+//        let fromPublicKey = account.publicKey
         if fromPublicKey.base58EncodedString == destination {
             onComplete(.failure(SolanaError.other("You can not send tokens to yourself")))
             return
@@ -51,7 +54,7 @@ extension Action {
             )
             self.serializeAndSendWithFee(
                 instructions: [instruction],
-                signers: [account]
+                signers: [signer]
             ) {
                 switch $0 {
                 case .success(let transaction):
@@ -67,17 +70,19 @@ extension Action {
 
 extension ActionTemplates {
     public struct SendSOL: ActionTemplate {
-        public init(amount: UInt64, destination: String) {
+        public init(amount: UInt64, destination: String, signer: Signer) {
             self.amount = amount
             self.destination = destination
+            self.signer = signer
         }
 
         public typealias Success = TransactionID
         public let amount: UInt64
         public let destination: String
+        public let signer: Signer
 
         public func perform(withConfigurationFrom actionClass: Action, completion: @escaping (Result<TransactionID, Error>) -> Void) {
-            actionClass.sendSOL(to: destination, amount: amount, onComplete: completion)
+            actionClass.sendSOL(to: destination, amount: amount, signer: signer, onComplete: completion)
         }
     }
 }

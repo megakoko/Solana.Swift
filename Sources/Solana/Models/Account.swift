@@ -1,10 +1,15 @@
 import Foundation
 import TweetNacl
 
-public struct Account: Codable, Hashable {
+public struct Account: Codable, Hashable, Signer {
     public let phrase: [String]
     public let publicKey: PublicKey
     public let secretKey: Data
+    
+    public func sign(message: Data, completion: @escaping (Data?) -> Void) {
+        let signed = try? NaclSign.signDetached(message: message, secretKey: secretKey)
+        completion(signed)
+    }
 
     public init?(phrase: [String] = [], network: Network, derivablePath: DerivablePath? = nil) {
         let mnemonic: Mnemonic
