@@ -1,26 +1,10 @@
 import Foundation
 import TweetNacl
-//import BlockchainSdk
 
 public protocol Signer {
     var publicKey: PublicKey { get }
     func sign(message: Data, completion: @escaping (Data?) -> Void)
 }
-//
-//class BasicExternalSigner: Signer {
-//    let secretKey: Data
-//    let publicKey: PublicKey
-//
-//    init(secretKey: Data, publicKey: PublicKey) {
-//        self.secretKey = secretKey
-//        self.publicKey = publicKey
-//    }
-//
-//    func sign(message: Data, completion: (Data?) -> Void) {
-//        let signed = try? NaclSign.signDetached(message: message, secretKey: secretKey)
-//        completion(signed)
-//    }
-//}
 
 class Transaction {
     private var signatures = [Signature]()
@@ -58,14 +42,10 @@ class Transaction {
         // construct message
         switch compile() {
         case .failure(let error):
-            break
+            onComplete(.failure(error))
         case .success(let message):
             partialSign(message: message, signers: signers, onComplete: onComplete)
         }
-        
-//        return compile().flatMap { message in
-//            return partialSign(message: message, signers: signers)
-//        }
     }
 
      func serialize(
@@ -105,8 +85,7 @@ class Transaction {
     private  func partialSign(message: Message, signers: [Signer], onComplete: @escaping (Result<Void, Error>) -> Void) {
         switch message.serialize() {
         case .failure(let error):
-            
-            break
+            onComplete(.failure(error))
         case .success(let serializedMessage):
             for signer in signers {
                 signer.sign(message: serializedMessage) { signedData in
@@ -114,25 +93,7 @@ class Transaction {
                     onComplete(.success(()))
                 }
             }
-            break
         }
-        
-        
-        
-//            .flatMap { signData in
-//                for signer in signers {
-//                    do {
-//                        signer.sign(message: <#T##Data#>, completion: <#T##(Data?) -> Void#>)
-                        
-                        
-//                        let data = try NaclSign.signDetached(message: signData, secretKey: signer.secretKey)
-//                        try _addSignature(Signature(signature: data, publicKey: signer.publicKey)).get()
-//                    } catch let error {
-//                        return .failure(error)
-//                    }
-//                }
-//                return .success(())
-//            }
     }
 
     private  func _addSignature(_ signature: Signature) -> Result<Void, Error> {
