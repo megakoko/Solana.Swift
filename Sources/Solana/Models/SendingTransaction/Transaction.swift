@@ -48,7 +48,7 @@ class Transaction {
         }
     }
 
-     func serialize(
+    func serialize(
         requiredAllSignatures: Bool = true,
         verifySignatures: Bool = false
     ) -> Result<Data, Error> {
@@ -61,17 +61,17 @@ class Transaction {
     }
 
     // MARK: - Helpers
-     func addSignature(_ signature: Signature) -> Result<Void, Error> {
+    func addSignature(_ signature: Signature) -> Result<Void, Error> {
         return compile() // Ensure signatures array is populated
             .flatMap { _ in return _addSignature(signature) }
     }
 
-     func serializeMessage() -> Result<Data, Error> {
+    func serializeMessage() -> Result<Data, Error> {
         return compile()
             .flatMap { $0.serialize() }
     }
 
-     func verifySignatures() -> Result<Bool, Error> {
+    func verifySignatures() -> Result<Bool, Error> {
         return serializeMessage().flatMap {
             _verifySignatures(serializedMessage: $0, requiredAllSignatures: true)
         }
@@ -82,7 +82,7 @@ class Transaction {
     }
 
     // MARK: - Signing
-    private  func partialSign(message: Message, signers: [Signer], queue: DispatchQueue, onComplete: @escaping (Result<Void, Error>) -> Void) {
+    private func partialSign(message: Message, signers: [Signer], queue: DispatchQueue, onComplete: @escaping (Result<Void, Error>) -> Void) {
         switch message.serialize() {
         case .failure(let error):
             onComplete(.failure(error))
@@ -115,7 +115,7 @@ class Transaction {
         }
     }
 
-    private  func _addSignature(_ signature: Signature) -> Result<Void, Error> {
+    private func _addSignature(_ signature: Signature) -> Result<Void, Error> {
         guard let data = signature.signature,
               data.count == 64,
               let index = signatures.firstIndex(where: {$0.publicKey == signature.publicKey})
@@ -128,7 +128,7 @@ class Transaction {
     }
 
     // MARK: - Compiling
-    private  func compile() -> Result<Message, Error> {
+    private func compile() -> Result<Message, Error> {
         compileMessage().map { message in
             let signedKeys = message.accountKeys.filter { $0.isSigner }
             if signatures.count == signedKeys.count {
@@ -247,7 +247,7 @@ class Transaction {
     }
 
     // MARK: - Verifying
-    private  func _verifySignatures(
+    private func _verifySignatures(
         serializedMessage: Data,
         requiredAllSignatures: Bool
     ) -> Result<Bool, Error> {
@@ -266,7 +266,7 @@ class Transaction {
     }
 
     // MARK: - Serializing
-    private  func _serialize(serializedMessage: Data) -> Result<Data, Error> {
+    private func _serialize(serializedMessage: Data) -> Result<Data, Error> {
         // signature length
         var signaturesLength = signatures.count
 
