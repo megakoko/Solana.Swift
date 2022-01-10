@@ -21,7 +21,7 @@ class Transaction {
     }
 
     // MARK: - Methods
-     func sign(signers: [Signer], onComplete: @escaping ((Result<Void, Error>) -> Void)) {
+    func sign(signers: [Signer], queue: DispatchQueue, onComplete: @escaping ((Result<Void, Error>) -> Void)) {
         guard signers.count > 0 else {
             onComplete(.failure(SolanaError.invalidRequest(reason: "No signers")))
             return
@@ -44,7 +44,7 @@ class Transaction {
         case .failure(let error):
             onComplete(.failure(error))
         case .success(let message):
-            partialSign(message: message, signers: signers, onComplete: onComplete)
+            partialSign(message: message, signers: signers, queue: queue, onComplete: onComplete)
         }
     }
 
@@ -82,14 +82,33 @@ class Transaction {
     }
 
     // MARK: - Signing
-    private  func partialSign(message: Message, signers: [Signer], onComplete: @escaping (Result<Void, Error>) -> Void) {
+    private  func partialSign(message: Message, signers: [Signer], queue: DispatchQueue, onComplete: @escaping (Result<Void, Error>) -> Void) {
         switch message.serialize() {
         case .failure(let error):
             onComplete(.failure(error))
         case .success(let serializedMessage):
+            let group = DispatchGroup()
+            var signingError: Error?
+            
             for signer in signers {
+                group.enter()
                 signer.sign(message: serializedMessage) { signedData in
-                    try! self._addSignature(Signature(signature: signedData, publicKey: signer.publicKey)).get()
+                    queue.async {
+                        do {
+                            try self._addSignature(Signature(signature: signedData, publicKey: signer.publicKey)).get()
+                        } catch {
+                            signingError = error
+                        }
+                        
+                        group.leave()
+                    }
+                }
+            }
+            
+            group.notify(queue: queue) {
+                if let signingError = signingError {
+                    onComplete(.failure(signingError))
+                } else {
                     onComplete(.success(()))
                 }
             }
