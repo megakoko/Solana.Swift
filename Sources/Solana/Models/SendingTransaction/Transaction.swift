@@ -87,12 +87,17 @@ class Transaction {
             
             for signer in signers {
                 group.enter()
-                signer.sign(message: serializedMessage) { signedData in
+                signer.sign(message: serializedMessage) { signedDataResult in
                     queue.async {
-                        do {
-                            try self._addSignature(Signature(signature: signedData, publicKey: signer.publicKey)).get()
-                        } catch {
+                        switch signedDataResult {
+                        case .failure(let error):
                             signingError = error
+                        case .success(let signedData):
+                            do {
+                                try self._addSignature(Signature(signature: signedData, publicKey: signer.publicKey)).get()
+                            } catch {
+                                signingError = error
+                            }
                         }
                         
                         group.leave()

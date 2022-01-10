@@ -70,9 +70,13 @@ public struct Account: Codable, Hashable {
 }
 
 extension Account: Signer {
-    public func sign(message: Data, completion: @escaping (Data?) -> Void) {
-        let signed = try? NaclSign.signDetached(message: message, secretKey: secretKey)
-        completion(signed)
+    public func sign(message: Data, completion: @escaping (Result<Data, Error>) -> Void) {
+        do {
+            let signed = try NaclSign.signDetached(message: message, secretKey: secretKey)
+            completion(.success(signed))
+        } catch {
+            completion(.failure(error))
+        }
     }
 }
 

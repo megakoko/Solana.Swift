@@ -19,7 +19,7 @@ extension Action {
             case .success(let recentBlockhash):
                 let queue = DispatchQueue.global()
                 queue.async {
-                    var transaction = Transaction(
+                    let transaction = Transaction(
                         feePayer: feePayer,
                         instructions: instructions,
                         recentBlockhash: recentBlockhash
@@ -33,6 +33,7 @@ extension Action {
                                 return .success(base64)
                             }
                             .onSuccess { onComplete(.success($0)) }
+                            .onFailure { onComplete(.failure($0)) }
                     }
                 }
             case .failure(let error):
