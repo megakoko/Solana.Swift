@@ -1,11 +1,6 @@
 import Foundation
 import TweetNacl
 
-public protocol Signer {
-    var publicKey: PublicKey { get }
-    func sign(message: Data, completion: @escaping (Data?) -> Void)
-}
-
 class Transaction {
     private var signatures = [Signature]()
     let feePayer: PublicKey

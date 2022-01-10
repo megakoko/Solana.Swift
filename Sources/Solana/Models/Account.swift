@@ -1,16 +1,11 @@
 import Foundation
 import TweetNacl
 
-public struct Account: Codable, Hashable, Signer {
+public struct Account: Codable, Hashable {
     public let phrase: [String]
     public let publicKey: PublicKey
     public let secretKey: Data
     
-    public func sign(message: Data, completion: @escaping (Data?) -> Void) {
-        let signed = try? NaclSign.signDetached(message: message, secretKey: secretKey)
-        completion(signed)
-    }
-
     public init?(phrase: [String] = [], network: Network, derivablePath: DerivablePath? = nil) {
         let mnemonic: Mnemonic
         var phrase = phrase.filter {!$0.isEmpty}
@@ -71,6 +66,13 @@ public struct Account: Codable, Hashable, Signer {
         self.secretKey = keys.secretKey
 
         self.phrase = phrase
+    }
+}
+
+extension Account: Signer {
+    public func sign(message: Data, completion: @escaping (Data?) -> Void) {
+        let signed = try? NaclSign.signDetached(message: message, secretKey: secretKey)
+        completion(signed)
     }
 }
 

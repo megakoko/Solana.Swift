@@ -10,7 +10,6 @@ extension Action {
     ) {
 
         guard let feePayer = feePayer ?? signers.first?.publicKey else {
-//        guard let feePayer = try? feePayer ?? auth.account.get().publicKey else {
             onComplete(.failure(SolanaError.invalidRequest(reason: "Fee-payer not found")))
             return
         }

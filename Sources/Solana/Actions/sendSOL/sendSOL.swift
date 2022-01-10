@@ -7,14 +7,8 @@ extension Action {
         signer: Signer,
         onComplete: @escaping ((Result<TransactionID, Error>) -> Void)
     ) {
-//        guard let account = try? self.auth.account.get() else {
-//            onComplete(.failure(SolanaError.unauthorized))
-//            return
-//        }
-        
         let fromPublicKey = signer.publicKey
 
-//        let fromPublicKey = account.publicKey
         if fromPublicKey.base58EncodedString == destination {
             onComplete(.failure(SolanaError.other("You can not send tokens to yourself")))
             return
